@@ -105,11 +105,15 @@ class LLMAgent(LocalAgent[LLMAgentState]):
         else:
             state.messages.append(message)
         messages = state.system_messages + state.messages
+        llm_args = deepcopy(self.llm_args)
+        tool_names = {tool.name for tool in self.tools}
+        if {"modify_user_address", "modify_pending_order_address"} <= tool_names:
+            llm_args["parallel_tool_calls"] = False
         assistant_message = generate(
             model=self.llm,
             tools=self.tools,
             messages=messages,
-            **self.llm_args,
+            **llm_args,
         )
         state.messages.append(assistant_message)
         return assistant_message, state
